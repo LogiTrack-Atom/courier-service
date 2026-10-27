@@ -344,3 +344,10 @@ registra revisiones, pruebas, imagen auditada, modos de ejecución y límites de
 comprobación. Courier queda preparado para integrar shipment mediante su contrato
 de disponibilidad. La publicación conjunta de imágenes y el Compose general se
 coordinan en shipment-service; una imagen local verificada no acredita su publicación.
+
+### Consulta administrativa de identidad
+
+`GET /api/v1/repartidores/{id}/usuario` requiere ADMIN y responde
+`{"repartidorId":"UUID","usuarioId":null}` o la cuenta vinculada. Es una consulta
+sin efectos ni llamadas a security. Permite verificar la asociación antes de registrar
+una referencia de autorización en shipment; las respuestas de dominio no cambian.
