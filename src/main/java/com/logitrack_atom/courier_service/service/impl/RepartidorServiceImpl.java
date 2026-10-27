@@ -1,5 +1,7 @@
 package com.logitrack_atom.courier_service.service.impl;
 
+import com.logitrack_atom.courier_service.dto.response.RepartidorIdentidadResponse;
+
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
 import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
 import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
@@ -88,6 +90,15 @@ public class RepartidorServiceImpl implements RepartidorService {
     @PreAuthorize("hasRole('ADMIN') or @repartidorAccess.puedeConsultar(#id, authentication)")
     public DisponibilidadRepartidorResponse disponibilidad(UUID id) {
         return mapper.disponibilidad(buscarExistente(id));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public RepartidorIdentidadResponse identidad(UUID id) {
+        var repartidor = buscarExistente(id);
+        return new RepartidorIdentidadResponse(
+                repartidor.getId(), repartidor.getUsuarioId());
     }
 
     private Repartidor buscarExistente(UUID id) {

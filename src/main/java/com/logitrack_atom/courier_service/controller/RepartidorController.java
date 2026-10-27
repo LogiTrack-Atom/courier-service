@@ -1,5 +1,7 @@
 package com.logitrack_atom.courier_service.controller;
 
+import com.logitrack_atom.courier_service.dto.response.RepartidorIdentidadResponse;
+
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
 import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
 import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
@@ -120,4 +122,14 @@ public class RepartidorController {
                                             @Valid @RequestBody AsociacionUsuarioRequest request) {
         return usuarios.asociar(id, request.usuarioId());
     }
+    /**
+     * Consulta exclusivamente como ADMIN la identidad vinculada al recurso.
+     * @param id UUID del repartidor
+     * @return referencia de usuario nullable, sin mutaciones ni datos personales
+     */
+    @GetMapping("/{id}/usuario")
+    public RepartidorIdentidadResponse identidad(@PathVariable UUID id) {
+        return service.identidad(id);
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.logitrack_atom.courier_service.service;
 
+import com.logitrack_atom.courier_service.dto.response.RepartidorIdentidadResponse;
+
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
 import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
 import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
@@ -29,6 +31,14 @@ public interface RepartidorService {
      * @throws IllegalArgumentException si los datos incumplen el modelo
      */
     RepartidorResponse crear(RepartidorRequest request);
+
+    /**
+     * Consulta como ADMIN la asociación actual sin llamar a otros servicios.
+     * @param id UUID del repartidor
+     * @return asociación nullable para sincronización administrativa
+     * @throws RecursoNoEncontradoException si el repartidor no existe
+     */
+    RepartidorIdentidadResponse identidad(UUID id);
 
     /**
      * Busca un registro por su UUID.

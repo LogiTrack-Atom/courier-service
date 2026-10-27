@@ -780,6 +780,96 @@
         "x-roles": [
           "ADMIN"
         ]
+      },
+      "get": {
+        "operationId": "consultarIdentidadRepartidor",
+        "summary": "Consultar asociación administrativa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repartidor encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepartidorIdentidadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Repartidor inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "x-roles": [
+          "ADMIN",
+          "REPARTIDOR"
+        ],
+        "description": "Solo ADMIN. Devuelve repartidorId y usuarioId nullable sin llamar a security ni modificar datos. Asociación inmutable utilizada en la sincronización administrativa de autorización de shipment."
       }
     }
   },
@@ -960,6 +1050,27 @@
         },
         "example": {
           "usuarioId": "8f3fd53c-83a4-4cdd-bf50-4b34dca59a81"
+        }
+      },
+      "RepartidorIdentidadResponse": {
+        "type": "object",
+        "required": [
+          "repartidorId",
+          "usuarioId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "repartidorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "usuarioId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
         }
       }
     },
