@@ -1,6 +1,7 @@
 package com.logitrack_atom.courier_service.mapper;
 
 import com.logitrack_atom.courier_service.dto.response.RepartidorResponse;
+import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
 import com.logitrack_atom.courier_service.entity.Repartidor;
 import org.springframework.stereotype.Component;
 
@@ -23,5 +24,14 @@ public class RepartidorMapper {
     public RepartidorResponse response(Repartidor row) {
         return new RepartidorResponse(row.getId(), row.getNombre(), row.getTipoVehiculo(),
                 row.getEstado(), row.getCreatedAt(), row.getUpdatedAt());
+    }
+
+    /**
+     * Proyecta la disponibilidad definida por el modelo, sin efectuar escrituras.
+     * @param row repartidor existente
+     * @return identidad, estado y disponibilidad coherentes
+     */
+    public DisponibilidadRepartidorResponse disponibilidad(Repartidor row) {
+        return new DisponibilidadRepartidorResponse(row.getId(), row.getEstado(), row.estaDisponible());
     }
 }

@@ -1,6 +1,8 @@
 package com.logitrack_atom.courier_service.service.impl;
 
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
+import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
+import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
 import com.logitrack_atom.courier_service.dto.response.RepartidorResponse;
 import com.logitrack_atom.courier_service.entity.Repartidor;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
@@ -55,5 +57,33 @@ public class RepartidorServiceImpl implements RepartidorService {
                 ? repository.findAll()
                 : repository.findByEstado(estado);
         return repartidores.stream().map(mapper::response).toList();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public RepartidorResponse actualizar(UUID id, RepartidorRequest request) {
+        Repartidor repartidor = buscarExistente(id);
+        repartidor.actualizarDatos(request.nombre(), request.tipoVehiculo());
+        return mapper.response(repository.saveAndFlush(repartidor));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public RepartidorResponse cambiarEstado(UUID id, EstadoRepartidorRequest request) {
+        Repartidor repartidor = buscarExistente(id);
+        repartidor.cambiarEstado(request.estado());
+        return mapper.response(repository.saveAndFlush(repartidor));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DisponibilidadRepartidorResponse disponibilidad(UUID id) {
+        return mapper.disponibilidad(buscarExistente(id));
+    }
+
+    private Repartidor buscarExistente(UUID id) {
+        return repository.findById(id).orElseThrow(RecursoNoEncontradoException::new);
     }
 }

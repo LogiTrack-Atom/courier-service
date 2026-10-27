@@ -1,6 +1,8 @@
 package com.logitrack_atom.courier_service.controller;
 
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
+import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
+import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
 import com.logitrack_atom.courier_service.dto.response.RepartidorResponse;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import com.logitrack_atom.courier_service.service.RepartidorService;
@@ -9,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -65,5 +69,38 @@ public class RepartidorController {
     @GetMapping
     public List<RepartidorResponse> listar(@RequestParam(required = false) EstadoRepartidor estado) {
         return service.listar(estado);
+    }
+
+    /**
+     * Reemplaza los datos descriptivos sin alterar el estado ni la identidad.
+     * @param id UUID del repartidor
+     * @param request nombre y vehículo validados
+     * @return DTO actualizado
+     */
+    @PutMapping("/{id}")
+    public RepartidorResponse actualizar(@PathVariable UUID id, @Valid @RequestBody RepartidorRequest request) {
+        return service.actualizar(id, request);
+    }
+
+    /**
+     * Establece explícitamente ACTIVO o INACTIVO.
+     * @param id UUID del repartidor
+     * @param request estado validado
+     * @return DTO con el estado vigente
+     */
+    @PatchMapping("/{id}/estado")
+    public RepartidorResponse cambiarEstado(@PathVariable UUID id,
+                                           @Valid @RequestBody EstadoRepartidorRequest request) {
+        return service.cambiarEstado(id, request);
+    }
+
+    /**
+     * Consulta la disponibilidad operativa sin efectos secundarios.
+     * @param id UUID del repartidor
+     * @return disponibilidad coherente con el estado local
+     */
+    @GetMapping("/{id}/disponibilidad")
+    public DisponibilidadRepartidorResponse disponibilidad(@PathVariable UUID id) {
+        return service.disponibilidad(id);
     }
 }
