@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: courier-service
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3308/db_courier_service?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+  server:
+    port: ${APP_PORT:8081}
+
+
+springdoc:
+  # Cada operación declara sus errores pertinentes, sin respuestas globales indiscriminadas.
+  override-with-generic-response: false
