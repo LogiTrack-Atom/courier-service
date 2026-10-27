@@ -29,7 +29,9 @@ services:
       courier-mysql:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: local
+      SPRING_PROFILES_ACTIVE: ${COURIER_PROFILE:-local}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL:-http://configserver:8085}
+      CONFIG_LABEL: ${CONFIG_LABEL:-develop}
       DB_URL: jdbc:mysql://courier-mysql:3306/${MYSQL_DATABASE:-courier_db}?serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-courier_app}
       DB_PASSWORD: ${MYSQL_PASSWORD:?Definir MYSQL_PASSWORD fuera de Git}

@@ -1,46 +1,18 @@
-server:
-  port: 8081
-  error:
-    include-message: never
-    include-binding-errors: never
-    include-stacktrace: never
 spring:
   application:
     name: courier-service
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-  jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate.jdbc.time_zone: UTC
-  jackson:
-    deserialization:
-      fail-on-unknown-properties: true
-    datatype:
-      enum:
-        fail-on-numbers-for-enums: true
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: never
-      show-components: never
-logitrack:
-  security:
-    issuer: ${JWT_ISSUER:logitrack-security}
-    audience: ${JWT_AUDIENCE:logitrack-api}
-    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
-    clock-skew: ${JWT_CLOCK_SKEW:60s}
-    public-key-location: ${JWT_PUBLIC_KEY_LOCATION}
-clients:
-  security:
-    base-url: ${SECURITY_SERVICE_URL:http://localhost:8082}
-    connect-timeout: ${SECURITY_CONNECT_TIMEOUT:2s}
-    read-timeout: ${SECURITY_READ_TIMEOUT:3s}
+  profiles:
+    default: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev | prod
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8085}
+  cloud:
+    config:
+      label: ${CONFIG_LABEL:develop}
+      fail-fast: true
+      request-connect-timeout: 2000
+      request-read-timeout: 3000

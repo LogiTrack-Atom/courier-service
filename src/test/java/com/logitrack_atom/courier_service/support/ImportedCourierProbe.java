@@ -35,7 +35,7 @@ public final class ImportedCourierProbe {
                 .path("payload").path("tables").path("repartidores");
         if (!rows.isArray() || rows.isEmpty()) throw new IllegalArgumentException("El ensayo debe contener repartidores.");
         for (int restart = 0; restart < 2; restart++) {
-            try (var context = new SpringApplicationBuilder(CourierServiceApplication.class).run("--server.port=0", "--logitrack.security.public-key-location=" + TestRsaKeys.publicResource().getURI())) {
+            try (var context = new SpringApplicationBuilder(CourierServiceApplication.class).run("--server.port=0", "--spring.profiles.active=local", "--logitrack.security.public-key-location=" + TestRsaKeys.publicResource().getURI())) {
                 var repository = context.getBean(RepartidorRepository.class);
                 for (var expected : rows) {
                     var bytes = ByteBuffer.wrap(HexFormat.of().parseHex(expected.path("id").asString()));
