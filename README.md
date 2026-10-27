@@ -59,7 +59,7 @@ La migración se ensaya en copias descartables antes de retirar la tabla o FK de
 Ramas por issue desde `develop`, PR hacia `develop` y seguimiento en el Project común.
 Las altas y consultas REST se implementan en #2; la edición, estado y disponibilidad
 en #3; JWT, pertenencia y asociación de cuentas en #4; y Config Client en #5.
-La consolidación del componente completo continúa en #6. Docker y Compose del componente
+La consolidación del componente se registra en #6 y en la evidencia enlazada al final. Docker y Compose del componente
 ya cuentan con una base verificada.
 
 El Compose general y la documentación de integración pertenecen a shipment-service.
@@ -267,7 +267,7 @@ propio localhost. En el Compose general se utilizará http://security-service:80
 
 Las pruebas generan claves efímeras, verifican firmas y claims, ejecutan la matriz
 completa por rol/pertenencia y usan un proveedor HTTP loopback para ensayar
-asociaciones, fallos y concurrencia sin cuentas del equipo. La consolidación del componente y sus escenarios de entrega continúa en #6.
+asociaciones, fallos y concurrencia sin cuentas del equipo. La verificación consolidada del componente está documentada en la evidencia de entrega.
 
 
 ## Configuración centralizada y perfiles
@@ -335,3 +335,12 @@ verificados por SHA-256 de un commit de configserver-ms (src/test/resources/conf
 Además, la integración se comprueba con el JAR de configserver del equipo,
 configuración obtenida desde GitHub por commit y la imagen de courier en ambos
 perfiles. Las revisiones exactas y resultados se registran en el PR de integración.
+
+
+## Entrega del componente e integración
+
+La [verificación consolidada del Sprint 02](docs/sprint02/Verificacion_componente.md)
+registra revisiones, pruebas, imagen auditada, modos de ejecución y límites de la
+comprobación. Courier queda preparado para integrar shipment mediante su contrato
+de disponibilidad. La publicación conjunta de imágenes y el Compose general se
+coordinan en shipment-service; una imagen local verificada no acredita su publicación.
