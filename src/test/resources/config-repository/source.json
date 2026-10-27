@@ -1,0 +1,9 @@
+{
+  "repository": "LogiTrack-Atom/configserver-ms",
+  "commit": "477acba615cb97a8a6e6d8d83784c2c15ccb0e6d",
+  "files": {
+    "courier-service.yml": "2cb99633aaf77f7069c4fc9a571bab031347a31f31fac96c6e4f1104a423486a",
+    "courier-service-dev.yml": "a3b557895a65762c3752896ba9e9c70f4489e299a223f433daf609d966a195e8",
+    "courier-service-prod.yml": "05949109cb4ebb95943b1becc6c9f7eb89493fdbd44da16f02ffe92af44e5df9"
+  }
+}

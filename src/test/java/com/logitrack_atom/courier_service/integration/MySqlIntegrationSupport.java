@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
+import java.util.Map;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.mysql.MySQLContainer;
@@ -22,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author MaxDz
  * @version 0.2.0
  */
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class MySqlIntegrationSupport {
     /** Contenedor efímero que Testcontainers retira al terminar el proceso. */
@@ -42,6 +45,15 @@ abstract class MySqlIntegrationSupport {
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);
+    }
+
+    /**
+     * Proporciona credenciales exclusivamente del MySQL descartable de estas pruebas.
+     * @return variables externas del cliente remoto de prueba
+     */
+    static Map<String, Object> databaseProperties() {
+        return Map.of("DB_URL", MYSQL.getJdbcUrl(), "DB_USERNAME", MYSQL.getUsername(),
+                "DB_PASSWORD", MYSQL.getPassword());
     }
 
     /** Repositorio real de repartidores. */

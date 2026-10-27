@@ -5,7 +5,7 @@ Responsable principal: [@JMatiasF](https://github.com/JMatiasF).
 
 ## Base del servicio
 
-Java 25, Spring Boot 4.1.1, Maven Wrapper y MySQL 8.4. El modelo conserva los datos
+Java 25, Spring Boot 4.1.1, Spring Cloud 2025.1.4, Maven Wrapper y MySQL 8.4. El modelo conserva los datos
 del Sprint01: UUID `BINARY(16)`, nombre, tipo de vehículo, ACTIVO/INACTIVO y auditoría
 UTC `DATETIME(6)`. `usuario_id` es opcional y único; no hay relaciones JPA ni FK a
 security o shipment. La disponibilidad del modelo significa ACTIVO, sin reservas.
@@ -21,14 +21,13 @@ por sí solo. Exportar DB_URL, DB_USERNAME y DB_PASSWORD desde el entorno o conf
 en el IDE. Nunca registrar contraseñas reales en comandos versionados.
 
 ```bash
-./mvnw spring-boot:run
-# Puerto 8081; MySQL debe estar preparado y accesible desde DB_URL.
+SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+# Config Server debe estar disponible; MySQL preparado y accesible desde DB_URL.
 ```
 
 JPA utiliza `ddl-auto=validate` y `open-in-view=false`. El arranque falla si falta la
 conexión o el esquema. `GET /actuator/health` publica salud agregada sin componentes
-ni detalles; no se exponen env/configprops. La integración obligatoria de Config Client
-y los perfiles remotos se completan en la issue #5.
+ni detalles; no se exponen env/configprops. Dev y prod cargan obligatoriamente sus propiedades remotas antes del arranque.
 
 ## Verificación reproducible
 
@@ -59,8 +58,8 @@ La migración se ensaya en copias descartables antes de retirar la tabla o FK de
 
 Ramas por issue desde `develop`, PR hacia `develop` y seguimiento en el Project común.
 Las altas y consultas REST se implementan en #2; la edición, estado y disponibilidad
-en #3; JWT, pertenencia y asociación de cuentas se incorporan en #4; Config Client en #5;
-y la verificación del componente completo en #6. Docker y Compose del componente
+en #3; JWT, pertenencia y asociación de cuentas en #4; y Config Client en #5.
+La consolidación del componente completo continúa en #6. Docker y Compose del componente
 ya cuentan con una base verificada.
 
 El Compose general y la documentación de integración pertenecen a shipment-service.
@@ -81,8 +80,9 @@ Preparar un archivo de entorno **externo** con las variables MYSQL_*, APP_PORT
 y JWT_PUBLIC_KEY_FILE de .env.example. La clave pública del emisor se monta como
 archivo de solo lectura en /run/keys/public.pem; el proceso 10001 debe poder leerla.
 No se monta la clave privada en courier. Las contraseñas son obligatorias y no tienen un valor de respaldo.
-Este Compose selecciona explícitamente el modo local del componente; Config Client
-y la comprobación dev/prod se completan en #5 y #6.
+Este Compose selecciona el modo local del componente por defecto. COURIER_PROFILE
+permite seleccionar dev o prod si se suministra CONFIG_SERVER_URL accesible desde
+el contenedor; esos ambientes exigen configuración remota.
 
 ```bash
 docker compose --env-file /ruta/externa/courier.env up --build -d
@@ -210,8 +210,7 @@ Para Docker, definir `JWT_PUBLIC_KEY_FILE` con el archivo del host; Compose lo m
 como solo lectura. No copiar claves al código, recursos ni imagen. El contrato
 exige issuer `logitrack-security`, audiencia `logitrack-api`, sub UUID canónico,
 roles conocidos no vacíos e iat/exp obligatorios, con vida máxima de 15 minutos y
-tolerancia de reloj máxima de 60 segundos. Config Client centralizará estas
-propiedades en #5, conservando los mismos nombres.
+tolerancia de reloj máxima de 60 segundos. Config Client centraliza estas propiedades para dev/prod, conservando los mismos nombres.
 
 | Operación | Acceso |
 | --- | --- |
@@ -268,5 +267,71 @@ propio localhost. En el Compose general se utilizará http://security-service:80
 
 Las pruebas generan claves efímeras, verifican firmas y claims, ejecutan la matriz
 completa por rol/pertenencia y usan un proveedor HTTP loopback para ensayar
-asociaciones, fallos y concurrencia sin cuentas del equipo. La validación del
-componente integrado con configuración remota continúa en #5 y #6.
+asociaciones, fallos y concurrencia sin cuentas del equipo. La consolidación del componente y sus escenarios de entrega continúa en #6.
+
+
+## Configuración centralizada y perfiles
+
+`spring.application.name` es courier-service. El archivo application.yaml conserva
+solo el nombre, el perfil predeterminado dev y el arranque de Config Client.
+Dev y prod utilizan `spring.config.import=configserver:...` obligatorio, label
+CONFIG_LABEL y fail-fast. No se usa import opcional ni se desactiva el verificador
+de compatibilidad de Spring Cloud. La combinación Java 25, Boot 4.1.1 y BOM Cloud
+2025.1.4 se comprueba al compilar y arrancar las pruebas de ambos ambientes.
+
+Los archivos courier-service.yml y courier-service-dev/prod.yml de
+[configserver-ms](https://github.com/LogiTrack-Atom/configserver-ms) aportan puerto,
+MySQL, JPA, JSON, seguridad, cliente administrativo, logging y marcador. Config Server
+entrega placeholders; **courier los resuelve desde su propio entorno**. No se envían
+contraseñas ni claves al servidor de configuración. La clave privada permanece
+exclusivamente en security-service.
+
+| Variable | Uso |
+| --- | --- |
+| SPRING_PROFILES_ACTIVE | dev o prod; dev es el perfil predeterminado |
+| CONFIG_SERVER_URL | Origen de Config Server; local por defecto http://localhost:8085 |
+| CONFIG_LABEL | Rama, etiqueta o commit Git; develop por defecto |
+| DB_URL, DB_USERNAME, DB_PASSWORD | Conexión del cliente a su base, sin respaldo de credenciales |
+| JWT_PUBLIC_KEY_LOCATION | Archivo público externo mediante URI file: |
+| COURIER_SERVER_PORT | Puerto del servicio; 8081 por defecto |
+| SECURITY_SERVICE_URL | Origen administrativo; entre contenedores http://security-service:8082 |
+| SECURITY_CONNECT_TIMEOUT, SECURITY_READ_TIMEOUT | 2s y 3s por defecto, respectivamente |
+
+Dev conserva logging de aplicación DEBUG y show-sql true; prod utiliza INFO y
+show-sql false. Cada perfil aporta su marcador courier-service-dev/prod. El bean
+ConfigMarkerProperties debe enlazar un marcador no vacío y el arranque registra
+solo ese valor no sensible: `Configuración activa de courier: courier-service-dev`
+o su equivalente prod. No se habilitan env/configprops para comprobarlo.
+
+```bash
+# Las credenciales y la ruta pública ya deben estar definidas en el entorno.
+SPRING_PROFILES_ACTIVE=dev CONFIG_SERVER_URL=http://localhost:8085 \
+  CONFIG_LABEL=develop ./mvnw spring-boot:run
+```
+
+Si Config Server no está disponible, el servicio rechaza el arranque. También falla
+si faltan el esquema/conexión de MySQL, su contraseña, el marcador o la clave pública
+válida. Para reproducir una entrega, usar un CONFIG_LABEL explícito y registrar
+su revisión junto con la de courier y configserver.
+
+`local` aísla deliberadamente el componente para desarrollo sin Config Server:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+```
+
+El archivo application-local.yaml conserva las mismas restricciones de datos y
+seguridad y exige MySQL y clave pública externos. No actúa como fallback de dev/prod;
+su activación excluye esos perfiles. `test` existe solo en los recursos de pruebas,
+importa esta configuración aislada y usa MySQL y claves efímeros.
+
+El Compose del componente acepta COURIER_PROFILE=local/dev/prod. Para dev/prod,
+CONFIG_SERVER_URL debe ser accesible desde la red del contenedor; el Compose
+general utilizará http://configserver:8085. El ejemplo de variables separa el perfil
+del proceso Java del seleccionado por Compose. No guardar valores reales en Git.
+
+Las pruebas remotas utilizan un Config Server real con Git temporal y snapshots
+verificados por SHA-256 de un commit de configserver-ms (src/test/resources/config-repository/source.json).
+Además, la integración se comprueba con el JAR de configserver del equipo,
+configuración obtenida desde GitHub por commit y la imagen de courier en ambos
+perfiles. Las revisiones exactas y resultados se registran en el PR de integración.
