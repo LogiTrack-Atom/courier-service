@@ -2,6 +2,7 @@ package com.logitrack_atom.courier_service.exception;
 
 import com.logitrack_atom.courier_service.dto.response.ApiError;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -97,6 +98,55 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> integridad() {
         return error(HttpStatus.CONFLICT, "El registro entra en conflicto con los datos existentes.", List.of());
+    }
+
+    /**
+     * Conserva la denegación de pertenencia aplicada en la capa de servicio.
+     * @return error 403 sin revelar el registro solicitado
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> accesoDenegado() {
+        return error(HttpStatus.FORBIDDEN, "Acceso denegado.", List.of());
+    }
+
+    /**
+     * Informa un conflicto de asociación sin reemplazar identidades existentes.
+     * @param ex regla de asociación incumplida
+     * @return error 409
+     */
+    @ExceptionHandler(AsociacionConflictoException.class)
+    public ResponseEntity<ApiError> asociacionInvalida(AsociacionConflictoException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage(), List.of());
+    }
+
+    /**
+     * Distingue una cuenta inexistente de una falla del proveedor.
+     * @param ex ausencia confirmada por security
+     * @return error 404
+     */
+    @ExceptionHandler(CuentaNoEncontradaException.class)
+    public ResponseEntity<ApiError> cuentaInexistente(CuentaNoEncontradaException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage(), List.of());
+    }
+
+    /**
+     * Rechaza una cuenta sin el rol de dominio requerido.
+     * @param ex incompatibilidad de rol
+     * @return error 422
+     */
+    @ExceptionHandler(RolUsuarioIncompatibleException.class)
+    public ResponseEntity<ApiError> rolIncompatible(RolUsuarioIncompatibleException ex) {
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), List.of());
+    }
+
+    /**
+     * Expone estados de integración sin propagar cuerpo, URL o credenciales remotas.
+     * @param ex indisponibilidad o respuesta incompatible
+     * @return error 502 o 503
+     */
+    @ExceptionHandler(SecurityServiceException.class)
+    public ResponseEntity<ApiError> proveedorSecurity(SecurityServiceException ex) {
+        return error(ex.getStatus(), ex.getMessage(), List.of());
     }
 
     /**

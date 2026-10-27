@@ -1,6 +1,7 @@
 package com.logitrack_atom.courier_service.integration;
 
 import com.logitrack_atom.courier_service.CourierServiceApplication;
+import com.logitrack_atom.courier_service.support.TestRsaKeys;
 import com.logitrack_atom.courier_service.entity.Repartidor;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import com.logitrack_atom.courier_service.repository.RepartidorRepository;
@@ -47,7 +48,7 @@ class RepartidorPersistenceIT extends MySqlIntegrationSupport {
             id.toString().replace("-", ""), Timestamp.from(created), Timestamp.from(updated), "O'Hara 🛵", "Moto eléctrica", "INACTIVO");
         comprobarImportado(repository.findById(id).orElseThrow(),id,created,updated);
         try (var restarted = new SpringApplicationBuilder(CourierServiceApplication.class)
-                .run("--server.port=0", "--spring.datasource.url=" + MYSQL.getJdbcUrl(),
+                .run("--server.port=0", "--logitrack.security.public-key-location=" + java.nio.file.Path.of(TestRsaKeys.publicResource().getPath()).toUri(), "--spring.datasource.url=" + MYSQL.getJdbcUrl(),
                     "--spring.datasource.username=" + MYSQL.getUsername(), "--spring.datasource.password=" + MYSQL.getPassword())) {
             comprobarImportado(restarted.getBean(RepartidorRepository.class).findById(id).orElseThrow(),id,created,updated);
         }

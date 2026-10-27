@@ -1,6 +1,7 @@
 package com.logitrack_atom.courier_service.integration;
 
 import com.logitrack_atom.courier_service.entity.Repartidor;
+import com.logitrack_atom.courier_service.support.TestRsaKeys;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -106,18 +107,18 @@ class RepartidorApiIT extends MySqlIntegrationSupport {
         error(request("GET", "/api/v1/repartidores?estado=activo", null), 400);
     }
 
-    /** El error 405 conserva Allow además de la estructura común. */
+    /** Las operaciones no declaradas se deniegan por defecto. */
     @Test
     void metodoNoAdmitido() throws Exception {
         var response = request("DELETE", "/api/v1/repartidores", null);
-        error(response, 405);
-        assertThat(response.headers().firstValue("Allow")).isPresent();
+        error(response, 403);
     }
 
     /** Un cuerpo de texto no se interpreta como una solicitud JSON válida. */
     @Test
     void contenidoNoAdmitido() throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1/repartidores"))
+                .header("Authorization", "Bearer " + TestRsaKeys.token(UUID.randomUUID(), "ADMIN"))
                 .header("Content-Type", "text/plain")
                 .POST(HttpRequest.BodyPublishers.ofString("Nombre;Moto"))
                 .build();
@@ -129,6 +130,7 @@ class RepartidorApiIT extends MySqlIntegrationSupport {
     @Test
     void respuestaNoAceptable() throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1/repartidores"))
+                .header("Authorization", "Bearer " + TestRsaKeys.token(UUID.randomUUID(), "ADMIN"))
                 .header("Accept", "text/plain")
                 .GET()
                 .build();
@@ -139,6 +141,7 @@ class RepartidorApiIT extends MySqlIntegrationSupport {
 
     private HttpResponse<String> request(String method, String path, String body) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path));
+        builder.header("Authorization", "Bearer " + TestRsaKeys.token(UUID.randomUUID(), "ADMIN"));
         if (body != null) {
             builder.header("Content-Type", "application/json");
         }

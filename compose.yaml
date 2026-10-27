@@ -33,6 +33,15 @@ services:
       DB_URL: jdbc:mysql://courier-mysql:3306/${MYSQL_DATABASE:-courier_db}?serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-courier_app}
       DB_PASSWORD: ${MYSQL_PASSWORD:?Definir MYSQL_PASSWORD fuera de Git}
+      JWT_PUBLIC_KEY_LOCATION: file:/run/keys/public.pem
+      SECURITY_SERVICE_URL: ${SECURITY_SERVICE_URL:-http://security-service:8082}
+    volumes:
+      - type: bind
+        source: ${JWT_PUBLIC_KEY_FILE:?Definir JWT_PUBLIC_KEY_FILE fuera de Git}
+        target: /run/keys/public.pem
+        read_only: true
+        bind:
+          create_host_path: false
     ports:
       - "127.0.0.1:${APP_PORT:-8081}:8081"
     networks: [logitrack-net]
