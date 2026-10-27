@@ -32,3 +32,15 @@ management:
     health:
       show-details: never
       show-components: never
+logitrack:
+  security:
+    issuer: ${JWT_ISSUER:logitrack-security}
+    audience: ${JWT_AUDIENCE:logitrack-api}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
+    clock-skew: ${JWT_CLOCK_SKEW:60s}
+    public-key-location: ${JWT_PUBLIC_KEY_LOCATION}
+clients:
+  security:
+    base-url: ${SECURITY_SERVICE_URL:http://localhost:8082}
+    connect-timeout: ${SECURITY_CONNECT_TIMEOUT:2s}
+    read-timeout: ${SECURITY_READ_TIMEOUT:3s}

@@ -1,6 +1,8 @@
 package com.logitrack_atom.courier_service.integration;
 
 import com.logitrack_atom.courier_service.repository.RepartidorRepository;
+import com.logitrack_atom.courier_service.support.TestRsaKeys;
+import com.logitrack_atom.courier_service.support.SecurityAccountStub;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +35,10 @@ abstract class MySqlIntegrationSupport {
     /** Sustituye únicamente la conexión del contexto de prueba. */
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
+        TestRsaKeys.registrar(registry);
+        registry.add("clients.security.base-url", SecurityAccountStub::baseUrl);
+        registry.add("clients.security.connect-timeout", () -> "200ms");
+        registry.add("clients.security.read-timeout", () -> "1s");
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);

@@ -3,7 +3,7 @@
   "info": {
     "title": "LogiTrack courier-service",
     "version": "0.2.0",
-    "description": "Altas, consultas, edición, estado y disponibilidad operativa del Sprint02. JWT y pertenencia se incorporan en la issue #4."
+    "description": "API de repartidores protegida con JWT Bearer RS256 y pertenencia mediante asociación local. La validación de tokens no realiza llamadas a security."
   },
   "servers": [
     {
@@ -82,8 +82,39 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN"
+        ]
       },
       "get": {
         "operationId": "listarRepartidores",
@@ -135,8 +166,39 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN"
+        ]
       }
     },
     "/api/v1/repartidores/{id}": {
@@ -194,8 +256,41 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN",
+          "REPARTIDOR"
+        ],
+        "description": " ADMIN consulta cualquier registro; REPARTIDOR consulta únicamente su asociación local por sub, sin equiparar sub al UUID del dominio."
       },
       "put": {
         "operationId": "actualizarRepartidor",
@@ -282,8 +377,39 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN"
+        ]
       }
     },
     "/api/v1/repartidores/{id}/estado": {
@@ -362,15 +488,46 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN"
+        ]
       }
     },
     "/api/v1/repartidores/{id}/disponibilidad": {
       "get": {
         "operationId": "consultarDisponibilidadRepartidor",
         "summary": "Consulta disponibilidad sin efectos secundarios",
-        "description": "Disponible significa estado ACTIVO. No reserva, no calcula carga ni consulta otros servicios. INACTIVO devuelve 200 con disponible false; un UUID inexistente devuelve 404.",
+        "description": "Disponible significa estado ACTIVO. No reserva, no calcula carga ni consulta otros servicios. INACTIVO devuelve 200 con disponible false; un UUID inexistente devuelve 404. ADMIN consulta cualquier registro; REPARTIDOR consulta únicamente su asociación local por sub, sin equiparar sub al UUID del dominio.",
         "parameters": [
           {
             "name": "id",
@@ -438,8 +595,191 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "x-roles": [
+          "ADMIN",
+          "REPARTIDOR"
+        ]
+      }
+    },
+    "/api/v1/repartidores/{id}/usuario": {
+      "put": {
+        "operationId": "asociarUsuarioRepartidor",
+        "summary": "Vincula explícitamente una cuenta REPARTIDOR existente",
+        "description": "Solo ADMIN. Se verifica cuenta y rol en security antes de la escritura local. Una cuenta no se vincula a dos repartidores; otra asociación existente no se reemplaza (409). Repetir la misma asociación devuelve 200 sin consultar al proveedor ni modificar auditoría. La respuesta es el DTO de dominio y no expone usuarioId.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsociacionUsuarioRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asociación persistida o repetición idempotente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepartidorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Repartidor o cuenta inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cuenta ya vinculada o asociación incompatible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Tipo de contenido no admitido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "La cuenta no tiene rol REPARTIDOR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Respuesta de security incompatible, redirección o 401/403 inesperado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Security no disponible, timeout, 429 o 5xx",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Rol o pertenencia insuficientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "x-roles": [
+          "ADMIN"
+        ]
       }
     }
   },
@@ -605,7 +945,36 @@
           "estado": "ACTIVO",
           "disponible": true
         }
+      },
+      "AsociacionUsuarioRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "usuarioId"
+        ],
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "example": {
+          "usuarioId": "8f3fd53c-83a4-4cdd-bf50-4b34dca59a81"
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token emitido por security-service, con sub UUID y roles explícitos. Se valida localmente con la clave pública."
       }
     }
-  }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
 }

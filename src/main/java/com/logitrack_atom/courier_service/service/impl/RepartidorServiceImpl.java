@@ -11,6 +11,7 @@ import com.logitrack_atom.courier_service.mapper.RepartidorMapper;
 import com.logitrack_atom.courier_service.repository.RepartidorRepository;
 import com.logitrack_atom.courier_service.service.RepartidorService;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +40,7 @@ public class RepartidorServiceImpl implements RepartidorService {
     /** {@inheritDoc} */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public RepartidorResponse crear(RepartidorRequest request) {
         Repartidor repartidor = new Repartidor(request.nombre(), request.tipoVehiculo());
         return mapper.response(repository.saveAndFlush(repartidor));
@@ -46,12 +48,14 @@ public class RepartidorServiceImpl implements RepartidorService {
 
     /** {@inheritDoc} */
     @Override
+    @PreAuthorize("hasRole('ADMIN') or @repartidorAccess.puedeConsultar(#id, authentication)")
     public RepartidorResponse obtener(UUID id) {
         return mapper.response(repository.findById(id).orElseThrow(RecursoNoEncontradoException::new));
     }
 
     /** {@inheritDoc} */
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<RepartidorResponse> listar(EstadoRepartidor estado) {
         List<Repartidor> repartidores = estado == null
                 ? repository.findAll()
@@ -62,8 +66,9 @@ public class RepartidorServiceImpl implements RepartidorService {
     /** {@inheritDoc} */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public RepartidorResponse actualizar(UUID id, RepartidorRequest request) {
-        Repartidor repartidor = buscarExistente(id);
+        Repartidor repartidor = repository.findByIdForUpdate(id).orElseThrow(RecursoNoEncontradoException::new);
         repartidor.actualizarDatos(request.nombre(), request.tipoVehiculo());
         return mapper.response(repository.saveAndFlush(repartidor));
     }
@@ -71,14 +76,16 @@ public class RepartidorServiceImpl implements RepartidorService {
     /** {@inheritDoc} */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public RepartidorResponse cambiarEstado(UUID id, EstadoRepartidorRequest request) {
-        Repartidor repartidor = buscarExistente(id);
+        Repartidor repartidor = repository.findByIdForUpdate(id).orElseThrow(RecursoNoEncontradoException::new);
         repartidor.cambiarEstado(request.estado());
         return mapper.response(repository.saveAndFlush(repartidor));
     }
 
     /** {@inheritDoc} */
     @Override
+    @PreAuthorize("hasRole('ADMIN') or @repartidorAccess.puedeConsultar(#id, authentication)")
     public DisponibilidadRepartidorResponse disponibilidad(UUID id) {
         return mapper.disponibilidad(buscarExistente(id));
     }

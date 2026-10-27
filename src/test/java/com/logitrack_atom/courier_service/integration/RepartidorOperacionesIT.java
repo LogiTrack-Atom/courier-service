@@ -1,6 +1,7 @@
 package com.logitrack_atom.courier_service.integration;
 
 import com.logitrack_atom.courier_service.entity.Repartidor;
+import com.logitrack_atom.courier_service.support.TestRsaKeys;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -170,6 +171,7 @@ class RepartidorOperacionesIT extends MySqlIntegrationSupport {
 
     private HttpResponse<String> request(String method, String path, String body) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1/repartidores" + path));
+        builder.header("Authorization", "Bearer " + TestRsaKeys.token(UUID.randomUUID(), "ADMIN"));
         if (body != null) {
             builder.header("Content-Type", "application/json");
         }

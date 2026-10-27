@@ -59,7 +59,7 @@ La migración se ensaya en copias descartables antes de retirar la tabla o FK de
 
 Ramas por issue desde `develop`, PR hacia `develop` y seguimiento en el Project común.
 Las altas y consultas REST se implementan en #2; la edición, estado y disponibilidad
-en #3; autenticación, pertenencia y asociación de cuentas en #4; Config Client en #5;
+en #3; JWT, pertenencia y asociación de cuentas se incorporan en #4; Config Client en #5;
 y la verificación del componente completo en #6. Docker y Compose del componente
 ya cuentan con una base verificada.
 
@@ -77,8 +77,10 @@ JAR y una sonda de salud Java en una JRE. Las imágenes oficiales están fijadas
 digest y el runtime usa UID/GID 10001; no necesita curl ni wget. El contexto permite
 solo Maven Wrapper, pom y src/main y excluye pruebas, Git, entornos y claves.
 
-Preparar un archivo de entorno **externo** con las variables MYSQL_* y APP_PORT de
-.env.example. Las contraseñas son obligatorias y no tienen un valor de respaldo.
+Preparar un archivo de entorno **externo** con las variables MYSQL_*, APP_PORT
+y JWT_PUBLIC_KEY_FILE de .env.example. La clave pública del emisor se monta como
+archivo de solo lectura en /run/keys/public.pem; el proceso 10001 debe poder leerla.
+No se monta la clave privada en courier. Las contraseñas son obligatorias y no tienen un valor de respaldo.
 Este Compose selecciona explícitamente el modo local del componente; Config Client
 y la comprobación dev/prod se completan en #5 y #6.
 
@@ -114,19 +116,20 @@ No borrar el volumen del equipo para aplicar un init ni para demostrar persisten
 No se aceptan id, usuarioId, estado ni auditoría en el registro. La respuesta no
 incluye asociaciones de usuario ni entidades JPA. Las altas no modifican otros
 repartidores. El [contrato OpenAPI](docs/openapi.json) describe estas operaciones.
-JWT y las restricciones por rol/pertenencia se completan en #4 antes de la entrega.
+Estas operaciones requieren JWT y el acceso indicado en la matriz de permisos de este README.
 
 ```json
 {"nombre":"Repartidor de ejemplo","tipoVehiculo":"Moto"}
 ```
 
-Ejemplo local de alta y consulta:
+Ejemplo local de alta y consulta con un JWT ADMIN válido emitido por security
+y cargado en la variable de shell JWT_ADMIN (no guardar el token en archivos versionados):
 
 ```bash
-curl -i -X POST http://localhost:8081/api/v1/repartidores \
+curl -H "Authorization: Bearer ${JWT_ADMIN}" -i -X POST http://localhost:8081/api/v1/repartidores \
   -H 'Content-Type: application/json' \
   -d '{"nombre":"Repartidor de ejemplo","tipoVehiculo":"Moto"}'
-curl 'http://localhost:8081/api/v1/repartidores?estado=ACTIVO'
+curl -H "Authorization: Bearer ${JWT_ADMIN}" 'http://localhost:8081/api/v1/repartidores?estado=ACTIVO'
 ```
 
 El alta devuelve `201 Created` y `Location: /api/v1/repartidores/{id}`.
@@ -171,12 +174,12 @@ Una consulta individual sin coincidencias devuelve `404 Not Found` con este form
 
 ```bash
 # Reemplazar el UUID de ejemplo por el obtenido en el alta.
-curl -X PUT http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149 \
+curl -H "Authorization: Bearer ${JWT_ADMIN}" -X PUT http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149 \
   -H 'Content-Type: application/json' \
   -d '{"nombre":"Repartidor de ejemplo","tipoVehiculo":"Bicicleta"}'
-curl -X PATCH http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/estado \
+curl -H "Authorization: Bearer ${JWT_ADMIN}" -X PATCH http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/estado \
   -H 'Content-Type: application/json' -d '{"estado":"INACTIVO"}'
-curl http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/disponibilidad
+curl -H "Authorization: Bearer ${JWT_ADMIN}" http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/disponibilidad
 ```
 
 Un repartidor INACTIVO existe y responde **200**, con este cuerpo:
@@ -193,4 +196,77 @@ ACTIVO devuelve disponible true. La disponibilidad no implica reserva, exclusivi
 ni cálculo de carga. Un UUID inexistente devuelve 404; un UUID o cuerpo inválido,
 400 con ApiError. Una edición inválida no modifica parcialmente el registro.
 Los ejemplos para ambos estados están incluidos en [OpenAPI](docs/openapi.json).
-Las restricciones ADMIN/REPARTIDOR y la asociación de cuentas se completan en #4.
+Las restricciones ADMIN/REPARTIDOR y la asociación de cuentas se aplican según la matriz siguiente.
+
+## JWT, permisos y asociación de cuentas
+
+Courier valida RS256 con la clave pública **externa** del mismo emisor que utiliza
+security-service. No firma tokens, no contiene una clave privada, no usa sesiones
+ni cookies de autenticación y no consulta a security para verificar cada petición.
+Una clave ausente, inválida o RSA menor de 2048 bits impide arrancar.
+
+Para ejecutar desde el IDE o Maven, definir `JWT_PUBLIC_KEY_LOCATION=file:/ruta/externa/public.pem`.
+Para Docker, definir `JWT_PUBLIC_KEY_FILE` con el archivo del host; Compose lo monta
+como solo lectura. No copiar claves al código, recursos ni imagen. El contrato
+exige issuer `logitrack-security`, audiencia `logitrack-api`, sub UUID canónico,
+roles conocidos no vacíos e iat/exp obligatorios, con vida máxima de 15 minutos y
+tolerancia de reloj máxima de 60 segundos. Config Client centralizará estas
+propiedades en #5, conservando los mismos nombres.
+
+| Operación | Acceso |
+| --- | --- |
+| POST /api/v1/repartidores | ADMIN |
+| GET /api/v1/repartidores | ADMIN |
+| GET /api/v1/repartidores/{id} | ADMIN o REPARTIDOR asociado |
+| PUT /api/v1/repartidores/{id} | ADMIN |
+| PATCH /api/v1/repartidores/{id}/estado | ADMIN |
+| GET /api/v1/repartidores/{id}/disponibilidad | ADMIN o REPARTIDOR asociado |
+| PUT /api/v1/repartidores/{id}/usuario | ADMIN |
+| GET /actuator/health | Público, sin detalles internos |
+
+CLIENTE no accede a la API de repartidores. Un REPARTIDOR sin asociación no puede
+reclamar un registro por conocer su UUID ni por usar ese UUID como sub. Las rutas
+no declaradas se deniegan. Bearer ausente, inválido o vencido devuelve 401 con
+WWW-Authenticate: Bearer; rol o pertenencia insuficientes devuelven 403. Ambos
+utilizan ApiError. Para un REPARTIDOR, las consultas ajenas o sin asociación se
+denominan denegadas, sin revelar si existe el recurso. ADMIN conserva el 404 normal.
+
+La vinculación se solicita con `{"usuarioId":"<UUID de cuenta>"}`:
+
+```bash
+curl -X PUT http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/usuario \
+  -H "Authorization: Bearer ${JWT_ADMIN}" -H 'Content-Type: application/json' \
+  -d '{"usuarioId":"8f3fd53c-83a4-4cdd-bf50-4b34dca59a81"}'
+```
+
+Antes de guardar, courier consulta GET /api/v1/usuarios/{id} en el origen
+`SECURITY_SERVICE_URL`, reenviando exclusivamente el Bearer ADMIN ya validado.
+Los tiempos iniciales son 2 segundos de conexión y 3 de lectura, configurables
+por SECURITY_CONNECT_TIMEOUT y SECURITY_READ_TIMEOUT. No se siguen redirecciones
+ni se agregan reintentos de aplicación. La lectura de una respuesta se limita a
+64 KiB y se comprueban UUID y roles, sin conservar email ni auditoría de la cuenta.
+
+La consulta remota termina antes de abrir la transacción local de escritura.
+Las modificaciones de un mismo repartidor usan bloqueo de fila y la base impone
+unicidad de usuario. Repetir una asociación idéntica devuelve 200 sin escritura ni
+otra consulta; reemplazarla por otra cuenta devuelve 409. La respuesta sigue siendo
+RepartidorResponse y no expone usuarioId.
+
+| Resultado de la asociación | Respuesta de courier |
+| --- | --- |
+| Repartidor o cuenta inexistente | 404 |
+| Cuenta sin rol REPARTIDOR | 422 |
+| Cuenta ya vinculada o intento de reemplazo | 409 |
+| Security caído, timeout, 429 o 5xx | 503, sin vinculación |
+| Respuesta incoherente, JSON inválido, redirección o 401/403 remoto inesperado | 502, sin vinculación |
+
+El Compose del componente no inicia security. Sus lecturas y operaciones locales
+siguen funcionando con JWT válido aunque security no esté disponible; una nueva
+asociación requiere acceso al proveedor. Para probarla, configurar
+SECURITY_SERVICE_URL con un origen accesible **desde el contenedor**, no con su
+propio localhost. En el Compose general se utilizará http://security-service:8082.
+
+Las pruebas generan claves efímeras, verifican firmas y claims, ejecutan la matriz
+completa por rol/pertenencia y usan un proveedor HTTP loopback para ensayar
+asociaciones, fallos y concurrencia sin cuentas del equipo. La validación del
+componente integrado con configuración remota continúa en #5 y #6.

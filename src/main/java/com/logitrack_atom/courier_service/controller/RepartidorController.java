@@ -6,6 +6,8 @@ import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorR
 import com.logitrack_atom.courier_service.dto.response.RepartidorResponse;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import com.logitrack_atom.courier_service.service.RepartidorService;
+import com.logitrack_atom.courier_service.service.RepartidorUsuarioService;
+import com.logitrack_atom.courier_service.dto.request.AsociacionUsuarioRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,12 +34,15 @@ import java.util.UUID;
 @RequestMapping("/api/v1/repartidores")
 public class RepartidorController {
     private final RepartidorService service;
+    private final RepartidorUsuarioService usuarios;
     /**
      * Inyecta el contrato de negocio.
      * @param service servicio de repartidores
+     * @param usuarios coordinación de asociaciones administrativas
      */
-    public RepartidorController(RepartidorService service) {
+    public RepartidorController(RepartidorService service, RepartidorUsuarioService usuarios) {
         this.service = service;
+        this.usuarios = usuarios;
     }
 
     /**
@@ -102,5 +107,17 @@ public class RepartidorController {
     @GetMapping("/{id}/disponibilidad")
     public DisponibilidadRepartidorResponse disponibilidad(@PathVariable UUID id) {
         return service.disponibilidad(id);
+    }
+
+    /**
+     * Vincula una cuenta existente mediante verificación administrativa explícita.
+     * @param id UUID del repartidor
+     * @param request identidad de la cuenta que se desea comprobar
+     * @return DTO de dominio con la asociación persistida
+     */
+    @PutMapping("/{id}/usuario")
+    public RepartidorResponse asociarUsuario(@PathVariable UUID id,
+                                            @Valid @RequestBody AsociacionUsuarioRequest request) {
+        return usuarios.asociar(id, request.usuarioId());
     }
 }
