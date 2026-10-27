@@ -154,3 +154,43 @@ Una consulta individual sin coincidencias devuelve `404 Not Found` con este form
   "detalles": []
 }
 ```
+
+
+## Edición, estado y disponibilidad
+
+- `PUT /api/v1/repartidores/{id}` reemplaza nombre y tipoVehiculo con el mismo DTO
+  descriptivo del alta. Ambos campos son obligatorios. Conserva UUID, usuario,
+  estado y fecha de creación; devuelve 200 con RepartidorResponse.
+- `PATCH /api/v1/repartidores/{id}/estado` recibe únicamente
+  `{"estado":"ACTIVO"}` o `{"estado":"INACTIVO"}`. No acepta ordinales numéricos
+  ni campos ajenos. Devuelve 200 con RepartidorResponse; repetir el estado vigente
+  no modifica los datos ni la auditoría.
+- `GET /api/v1/repartidores/{id}/disponibilidad` consulta solo la base de courier,
+  sin escrituras ni llamadas a shipment. Su respuesta tiene exactamente
+  repartidorId, estado y disponible.
+
+```bash
+# Reemplazar el UUID de ejemplo por el obtenido en el alta.
+curl -X PUT http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149 \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Repartidor de ejemplo","tipoVehiculo":"Bicicleta"}'
+curl -X PATCH http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/estado \
+  -H 'Content-Type: application/json' -d '{"estado":"INACTIVO"}'
+curl http://localhost:8081/api/v1/repartidores/bf9c4dd3-a149-452c-bf89-158f0889b149/disponibilidad
+```
+
+Un repartidor INACTIVO existe y responde **200**, con este cuerpo:
+
+```json
+{
+  "repartidorId": "bf9c4dd3-a149-452c-bf89-158f0889b149",
+  "estado": "INACTIVO",
+  "disponible": false
+}
+```
+
+ACTIVO devuelve disponible true. La disponibilidad no implica reserva, exclusividad
+ni cálculo de carga. Un UUID inexistente devuelve 404; un UUID o cuerpo inválido,
+400 con ApiError. Una edición inválida no modifica parcialmente el registro.
+Los ejemplos para ambos estados están incluidos en [OpenAPI](docs/openapi.json).
+Las restricciones ADMIN/REPARTIDOR y la asociación de cuentas se completan en #4.

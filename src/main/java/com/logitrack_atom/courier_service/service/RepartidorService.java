@@ -1,6 +1,8 @@
 package com.logitrack_atom.courier_service.service;
 
 import com.logitrack_atom.courier_service.dto.request.RepartidorRequest;
+import com.logitrack_atom.courier_service.dto.request.EstadoRepartidorRequest;
+import com.logitrack_atom.courier_service.dto.response.DisponibilidadRepartidorResponse;
 import com.logitrack_atom.courier_service.dto.response.RepartidorResponse;
 import com.logitrack_atom.courier_service.enums.EstadoRepartidor;
 import com.logitrack_atom.courier_service.exception.RecursoNoEncontradoException;
@@ -42,4 +44,32 @@ public interface RepartidorService {
      * @return lista, vacía si no hay coincidencias
      */
     List<RepartidorResponse> listar(EstadoRepartidor estado);
+
+    /**
+     * Actualiza nombre y vehículo conservando identidad, usuario y estado.
+     * @param id UUID del repartidor
+     * @param request datos descriptivos completos y válidos
+     * @return repartidor actualizado
+     * @throws RecursoNoEncontradoException si no existe
+     * @throws IllegalArgumentException si algún dato incumple el modelo
+     */
+    RepartidorResponse actualizar(UUID id, RepartidorRequest request);
+
+    /**
+     * Cambia únicamente el estado operativo; repetir el estado vigente es válido.
+     * @param id UUID del repartidor
+     * @param request estado explícito y obligatorio
+     * @return repartidor con el estado solicitado
+     * @throws RecursoNoEncontradoException si no existe
+     * @throws IllegalArgumentException si el estado es nulo
+     */
+    RepartidorResponse cambiarEstado(UUID id, EstadoRepartidorRequest request);
+
+    /**
+     * Consulta disponibilidad sin mutar datos ni invocar otros servicios.
+     * @param id UUID del repartidor
+     * @return disponibilidad operativa; INACTIVO devuelve disponible falso
+     * @throws RecursoNoEncontradoException si no existe
+     */
+    DisponibilidadRepartidorResponse disponibilidad(UUID id);
 }
