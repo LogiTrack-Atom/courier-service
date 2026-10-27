@@ -58,10 +58,10 @@ La migración se ensaya en copias descartables antes de retirar la tabla o FK de
 ## Desarrollo
 
 Ramas por issue desde `develop`, PR hacia `develop` y seguimiento en el Project común.
-Las capas REST/DTO/service y su contrato se completan en #2 y #3; autenticación,
-pertenencia y asociación de cuentas en #4; Config Client en #5; Docker/OpenAPI y
-verificación del componente completo en #6. No se presentan como entregadas antes
-de implementarlas y probarlas.
+Las altas y consultas REST se implementan en #2; la edición, estado y disponibilidad
+en #3; autenticación, pertenencia y asociación de cuentas en #4; Config Client en #5;
+y la verificación del componente completo en #6. Docker y Compose del componente
+ya cuentan con una base verificada.
 
 El Compose general y la documentación de integración pertenecen a shipment-service.
 
@@ -101,3 +101,56 @@ Compose; no se exige crear una red externa y no se fijan nombres globales que
 impidan dos instancias de ensayo. El Compose general del sprint y las imágenes de
 entrega publicadas continúan en shipment-service; este archivo es para el componente.
 No borrar el volumen del equipo para aplicar un init ni para demostrar persistencia.
+
+## API de altas y consultas
+
+- POST /api/v1/repartidores recibe solamente nombre y tipoVehiculo; devuelve 201,
+  Location, UUID generado, estado ACTIVO y auditoría UTC con microsegundos.
+- GET /api/v1/repartidores devuelve una lista (vacía como []) y admite el filtro
+  opcional estado=ACTIVO o INACTIVO.
+- GET /api/v1/repartidores/{id} devuelve el DTO o 404; UUID/filtro malformado y
+  campos inválidos/no admitidos devuelven 400 con ApiError.
+
+No se aceptan id, usuarioId, estado ni auditoría en el registro. La respuesta no
+incluye asociaciones de usuario ni entidades JPA. Las altas no modifican otros
+repartidores. El [contrato OpenAPI](docs/openapi.json) describe estas operaciones.
+JWT y las restricciones por rol/pertenencia se completan en #4 antes de la entrega.
+
+```json
+{"nombre":"Repartidor de ejemplo","tipoVehiculo":"Moto"}
+```
+
+Ejemplo local de alta y consulta:
+
+```bash
+curl -i -X POST http://localhost:8081/api/v1/repartidores \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Repartidor de ejemplo","tipoVehiculo":"Moto"}'
+curl 'http://localhost:8081/api/v1/repartidores?estado=ACTIVO'
+```
+
+El alta devuelve `201 Created` y `Location: /api/v1/repartidores/{id}`.
+El UUID y las fechas del siguiente ejemplo son ilustrativos:
+
+```json
+{
+  "id": "bf9c4dd3-a149-452c-bf89-158f0889b149",
+  "nombre": "Repartidor de ejemplo",
+  "tipoVehiculo": "Moto",
+  "estado": "ACTIVO",
+  "createdAt": "2026-10-27T12:00:00.123456Z",
+  "updatedAt": "2026-10-27T12:00:00.123456Z"
+}
+```
+
+Una consulta individual sin coincidencias devuelve `404 Not Found` con este formato:
+
+```json
+{
+  "timestamp": "2026-10-27T12:00:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "mensaje": "No se encontró el repartidor solicitado.",
+  "detalles": []
+}
+```
