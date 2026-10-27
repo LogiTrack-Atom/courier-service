@@ -64,3 +64,40 @@ verificación del componente completo en #6. No se presentan como entregadas ant
 de implementarlas y probarlas.
 
 El Compose general y la documentación de integración pertenecen a shipment-service.
+
+## Docker y Compose del componente
+
+El Dockerfile y Compose de la inicialización se integran conservando el commit
+[90d70e4](https://github.com/LogiTrack-Atom/courier-service/commit/90d70e4493c49186ebb0678ae62d193ee6590f35)
+y reconciliando su historial con develop. Se conserva una sola aplicación, el modelo,
+el SQL y la verificación JPA ya integrados. Continúan Boot 4.1.1 y Java 25.
+
+El contenedor compila con Maven Wrapper en una etapa JDK y ejecuta únicamente el
+JAR y una sonda de salud Java en una JRE. Las imágenes oficiales están fijadas por
+digest y el runtime usa UID/GID 10001; no necesita curl ni wget. El contexto permite
+solo Maven Wrapper, pom y src/main y excluye pruebas, Git, entornos y claves.
+
+Preparar un archivo de entorno **externo** con las variables MYSQL_* y APP_PORT de
+.env.example. Las contraseñas son obligatorias y no tienen un valor de respaldo.
+Este Compose selecciona explícitamente el modo local del componente; Config Client
+y la comprobación dev/prod se completan en #5 y #6.
+
+```bash
+docker compose --env-file /ruta/externa/courier.env up --build -d
+docker compose --env-file /ruta/externa/courier.env ps
+docker compose --env-file /ruta/externa/courier.env logs courier-service
+# Detener conservando el volumen de datos:
+docker compose --env-file /ruta/externa/courier.env down
+```
+
+El puerto interno es 8081 y la publicación local usa APP_PORT, por defecto 8081.
+MySQL se publica solo en loopback, por defecto 3308. La aplicación usa el DNS
+courier-mysql:3306 y el mismo MYSQL_DATABASE/USER del contenedor, con JPA validate.
+El healthcheck de MySQL exige conexión con el usuario de aplicación y la tabla
+repartidores disponible; el de courier comprueba /actuator/health en 8081.
+
+La red y los nombres de contenedores están aislados por el nombre del proyecto
+Compose; no se exige crear una red externa y no se fijan nombres globales que
+impidan dos instancias de ensayo. El Compose general del sprint y las imágenes de
+entrega publicadas continúan en shipment-service; este archivo es para el componente.
+No borrar el volumen del equipo para aplicar un init ni para demostrar persistencia.

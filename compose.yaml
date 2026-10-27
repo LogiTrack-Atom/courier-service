@@ -1,0 +1,44 @@
+# Entorno local del componente. El Compose general se mantiene en shipment-service.
+services:
+  courier-mysql:
+    image: mysql:8.4.11
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-courier_db}
+      MYSQL_USER: ${MYSQL_USER:-courier_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Definir MYSQL_PASSWORD fuera de Git}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Definir MYSQL_ROOT_PASSWORD fuera de Git}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${MYSQL_HOST_PORT:-3308}:3306"
+    volumes:
+      - mysql_courier_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP --host=127.0.0.1 --user="$${MYSQL_USER}" --database="$${MYSQL_DATABASE}" --batch --skip-column-names --execute="SELECT 1 FROM repartidores LIMIT 0" >/dev/null']
+      interval: 5s
+      timeout: 4s
+      retries: 15
+      start_period: 30s
+    networks: [logitrack-net]
+
+  courier-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      courier-mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:mysql://courier-mysql:3306/${MYSQL_DATABASE:-courier_db}?serverTimezone=UTC
+      DB_USERNAME: ${MYSQL_USER:-courier_app}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?Definir MYSQL_PASSWORD fuera de Git}
+    ports:
+      - "127.0.0.1:${APP_PORT:-8081}:8081"
+    networks: [logitrack-net]
+
+volumes:
+  mysql_courier_data:
+
+networks:
+  logitrack-net:
