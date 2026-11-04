@@ -67,7 +67,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/repartidores",
-                                "/api/v1/repartidores/{id}/usuario").hasRole("ADMIN")
+                                "/api/v1/repartidores/{id}/usuario", "/api/v1/admin/configuracion").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/repartidores/{id}",
                                 "/api/v1/repartidores/{id}/disponibilidad").hasAnyRole("ADMIN", "REPARTIDOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/repartidores").hasRole("ADMIN")

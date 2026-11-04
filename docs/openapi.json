@@ -871,6 +871,57 @@
         ],
         "description": "Solo ADMIN. Devuelve repartidorId y usuarioId nullable sin llamar a security ni modificar datos. Asociación inmutable utilizada en la sincronización administrativa de autorización de shipment."
       }
+    },
+    "/api/v1/admin/configuracion": {
+      "get": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Consultar configuración no sensible consumida",
+        "operationId": "consultarConfiguracion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aplicación, perfiles efectivos y marcador remoto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "aplicacion",
+                    "perfiles",
+                    "marcador"
+                  ],
+                  "properties": {
+                    "aplicacion": {
+                      "type": "string"
+                    },
+                    "perfiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "marcador": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Solo ADMIN"
+          }
+        }
+      }
     }
   },
   "components": {
