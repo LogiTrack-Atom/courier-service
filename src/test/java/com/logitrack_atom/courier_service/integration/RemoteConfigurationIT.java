@@ -112,6 +112,14 @@ class RemoteConfigurationIT {
                     .exchange((request, response) -> response.getStatusCode());
             assertThat(denied).isEqualTo(HttpStatus.UNAUTHORIZED);
             String token = TestRsaKeys.token(java.util.UUID.randomUUID(), "ADMIN");
+            String diagnostic = RestClient.create().get().uri(url + "/api/v1/admin/configuracion")
+                    .headers(headers -> headers.setBearerAuth(token)).retrieve().body(String.class);
+            var diagnosticJson = JsonMapper.builder().build().readTree(diagnostic);
+            assertThat(diagnosticJson.size()).isEqualTo(3);
+            assertThat(diagnosticJson.path("aplicacion").asString()).isEqualTo("courier-service");
+            assertThat(diagnosticJson.path("marcador").asString()).isEqualTo("courier-service-" + profile);
+            assertThat(diagnosticJson.path("perfiles").get(0).asString()).isEqualTo(profile);
+
             assertThat(RestClient.create().get().uri(url + "/api/v1/repartidores")
                     .headers(headers -> headers.setBearerAuth(token)).retrieve().body(String.class)).startsWith("[");
         }
