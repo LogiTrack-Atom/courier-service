@@ -881,7 +881,7 @@
         "operationId": "consultarConfiguracion",
         "security": [
           {
-            "bearerAuth": []
+            "BearerAuth": []
           }
         ],
         "responses": {
