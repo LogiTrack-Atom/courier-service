@@ -1,0 +1,16 @@
+target/
+.idea/
+*.iml
+.env
+.env.*
+!.env.example
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+keys/
+secrets/
+__pycache__/
+*.pyc

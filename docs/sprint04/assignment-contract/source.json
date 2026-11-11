@@ -1,0 +1,10 @@
+{
+  "repository": "LogiTrack-Atom/shipment-service",
+  "commit": "a1847a323dcdb6cd5192c5c9fa8634a09d0d1ccc",
+  "files": {
+    "command.schema.json": "3e525ecb45bcff568bf2ee5a69a38697c655acb82c5af690e213e476c47c320f",
+    "result.schema.json": "325e683ab0a3d29564061053fd3ee556cd0a64d6bbda6b6da6e58e8bfb35de13",
+    "examples/command.json": "8e21f9b350a9770eab915fc4debb4f2db55ac60390208aa3f8eba3f8e1540a6f",
+    "examples/result.json": "5f7be4d0ebcd1c320691757d510253f2982efc0a9df5d935fa4b0b63d25a43aa"
+  }
+}
